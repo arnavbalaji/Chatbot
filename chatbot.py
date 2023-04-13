@@ -119,13 +119,13 @@ class Seq2Seq(nn.Module):
         self.encoder = Encoder(self.input_size, self.hidden_size, self.dropout)
         self.decoder = Decoder(self.hidden_size, self.output_size, self.dropout)
     
-    def forward(self, src, trg, teacher_force=0.5):
+    def forward(self, src, trg, batch_size, teacher_force=0.5):
         src_len = src.shape[0]
         batch_size = trg.shape[1]
         trg_vocab_size = self.output_size
 
-        encoder_hidden = torch.zeros([2, 1, self.hidden_size]).to(device) 
-        cell_state = torch.zeros([2, 1, self.hidden_size]).to(device)
+        encoder_hidden = torch.zeros([2, batch_size, self.hidden_size]).to(device) 
+        cell_state = torch.zeros([2, batch_size, self.hidden_size]).to(device)
 
         encoder_outputs = torch.zeros(src_len, batch_size, self.hidden_size * 2).to(device)
 
@@ -154,6 +154,7 @@ class Seq2Seq(nn.Module):
 
         return outputs
 
+
 input_dim = len(question_field.vocab)
 output_dim = len(answer_field.vocab)
 hidden_dim = 512
@@ -172,7 +173,7 @@ for epoch in range(num_epochs):
     epoch_loss = 0
     for batch in train_iterator:
         optimizer.zero_grad()
-        outputs = model(batch.src, batch.trg)
+        outputs = model(batch.src, batch.trg, batch_size)
         
         outputs_flatten = outputs[1:].view(-1, outputs.shape[-1])
         trg_flatten = batch.trg[1:].view(-1)
